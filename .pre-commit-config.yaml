@@ -1,13 +1,17 @@
 repos:
+  # ── Secret Scanning ────────────────────────────────────────────────────────
   - repo: https://github.com/gitleaks/gitleaks
     rev: v8.30.0
     hooks:
       - id: gitleaks
 
+  # ── General Housekeeping ───────────────────────────────────────────────────
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
     hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-added-large-files
+      - id: trailing-whitespace       # Remove trailing whitespace
+      - id: end-of-file-fixer         # Ensure files end with a newline
+      - id: check-yaml                # Validate YAML syntax
+      - id: check-added-large-files   # Block files larger than 500kb
+      - id: check-merge-conflict      # Catch leftover merge conflict markers
+      - id: detect-private-key        # Extra layer — catch raw private keys
