@@ -208,7 +208,7 @@ Gitleaks v8.30.0 has these exact strings on an **internal allowlist** because th
 For a reliable demo, always use a **realistic-looking key with random characters** that matches a known secret format but isn't a documented example string:
 
 ```
-STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1    ✅ Blocked
+STRIPE_SECRET_KEY=sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx    ✅ Blocked
 ```
 
 Gitleaks catches this because it matches the `sk_live_` prefix pattern, has high entropy (4.875), and is not on any allowlist.
@@ -220,8 +220,8 @@ Gitleaks catches this because it matches the `sk_live_` prefix pattern, has high
 On Windows, `echo '...' > secret_test.py` writes the single quotes as part of the file content:
 
 ```
-'STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1'   ❌ Gitleaks misses this
-STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1     ✅ Gitleaks catches this
+'STRIPE_SECRET_KEY=sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx'   ❌ Gitleaks misses this
+STRIPE_SECRET_KEY=sk_live_xxxxxxxxxxxxxxxxxxxxxxxxxxxx     ✅ Gitleaks catches this
 ```
 
 Always verify with `type secret_test.py` (Windows) or `cat secret_test.py` (macOS/Linux) before staging to confirm there are no surrounding quotes.
