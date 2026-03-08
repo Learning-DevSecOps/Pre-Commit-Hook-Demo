@@ -72,7 +72,7 @@ git clone https://github.com/Learning-DevSecOps/precommit-gitleaks-demo.git
 cd precommit-gitleaks-demo
 ```
 
-### Step 3 — Activate and verify the hooks
+### Step 3 — Activate the hooks
 
 ```bash
 pre-commit install
@@ -101,6 +101,8 @@ repos:
       - id: end-of-file-fixer
       - id: check-yaml
       - id: check-added-large-files
+      - id: check-merge-conflict
+      - id: detect-private-key
 ```
 
 Gitleaks is pinned to `v8.30.0` — the version is locked in source control so every developer on the team runs the exact same scanner.
@@ -111,11 +113,47 @@ Gitleaks is pinned to `v8.30.0` — the version is locked in source control so e
 
 ### 🔴 Trigger — Commit Blocked by a Detected Secret
 
-Deliberately stage a file containing a fake AWS secret:
+Add a fake AWS secret to `test.txt` using the command for your platform:
 
+**macOS / Linux**
 ```bash
 echo 'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' >> test.txt
-git add test.txt && git commit -m "test"
+```
+
+**Windows CMD**
+```cmd
+echo AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY >> test.txt
+```
+
+**Windows PowerShell**
+```powershell
+Add-Content test.txt 'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+```
+
+> 💡 **Easiest cross-platform option:** Open `test.txt` in any editor, paste the line below on a new line, and save. No quoting issues on any OS.
+> ```
+> AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+> ```
+
+Before committing, verify the secret landed in the file correctly:
+
+```bash
+cat test.txt       # macOS / Linux
+type test.txt      # Windows CMD
+```
+
+The last line must look exactly like this — **no surrounding single quotes**:
+
+```
+AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY     ✅ Gitleaks will catch this
+'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'   ❌ Quoted — Gitleaks will miss this
+```
+
+Now stage and commit:
+
+```bash
+git add test.txt
+git commit -m "test"
 ```
 
 Expected output — the commit is **blocked**:
@@ -132,7 +170,7 @@ Detect hardcoded secrets................................................Failed
     Line:        1
 ```
 
-The secret never reaches the repository. Clean up the test file:
+The secret never reaches the repository. Restore the file:
 
 ```bash
 git restore test.txt
@@ -145,19 +183,34 @@ git restore test.txt
 Stage the restored (clean) file and commit:
 
 ```bash
-git add test.txt && git commit -m "clean commit"
+git add test.txt
+git commit -m "clean commit"
 ```
 
 Expected output — all hooks pass:
 
 ```
 Detect hardcoded secrets................................................Passed
-Fix trailing whitespace.................................................Passed
-Fix End of Lines........................................................Passed
-Check Yaml..............................................................Passed
-Check for added large files.............................................Passed
+trim trailing whitespace................................................Passed
+fix end of files........................................................Passed
+check yaml...........................................(no files to check)Skipped
+check for added large files.............................................Passed
+check for merge conflicts...............................................Passed
+detect private key......................................................Passed
 [main 3f2a1b9] clean commit
 ```
+
+---
+
+## ⚠️ Common Pitfall — Secret Inside Quotes (Windows)
+
+On Windows, `echo '...' >> test.txt` writes the single quotes as part of the file content:
+
+```
+'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+```
+
+Gitleaks won't flag this — it doesn't match the pattern for a real credential assignment. Always run `type test.txt` to confirm the line has no surrounding quotes before staging.
 
 ---
 
@@ -169,7 +222,7 @@ Every new contributor needs just **one command** after cloning:
 pre-commit install
 ```
 
-No manual hook setup. No documentation to follow precisely. The `.pre-commit-config.yaml` committed to this repo ensures everyone runs identical checks, at the same version, every time.
+No manual hook setup. No documentation to follow precisely. The `.pre-commit-config.yaml` in this repo ensures everyone runs identical checks, at the same pinned version, every time.
 
 ---
 
