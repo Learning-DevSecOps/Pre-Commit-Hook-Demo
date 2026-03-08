@@ -1,0 +1,22 @@
+# test.txt — Demo file for the pre-commit + Gitleaks walkthrough
+#
+# This file is used in the README demo to show both scenarios:
+#
+#   SCENARIO 1 — Trigger a blocked commit:
+#   Run the following, then try to commit:
+#
+#       echo 'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' >> test.txt
+#       git add test.txt && git commit -m "test"
+#
+#   Expected: Detect hardcoded secrets.....Failed  ← commit blocked
+#
+#   SCENARIO 2 — Clean commit passes:
+#   Restore this file to its original state, then commit:
+#
+#       git restore test.txt
+#       git add test.txt && git commit -m "clean commit"
+#
+#   Expected: Detect hardcoded secrets.....Passed  ← commit succeeds
+
+DEMO_MODE=true
+LOG_LEVEL=info
