@@ -1,0 +1,43 @@
+# .gitleaks.toml
+# Extends the default Gitleaks ruleset with custom rules and allowlists.
+# Docs: https://github.com/gitleaks/gitleaks#configuration
+
+[extend]
+useDefault = true
+
+# ── Allowlists ─────────────────────────────────────────────────────────────
+# Suppress false positives from files that intentionally contain
+# placeholder or example credentials.
+
+[[allowlists]]
+description = "Ignore example and documentation files"
+paths = [
+  '''\.env\.example''',
+  '''docs/.*''',
+  '''README\.md''',
+  '''CHANGELOG\.md''',
+]
+
+[[allowlists]]
+description = "Ignore known test fixture values"
+regexes = [
+  '''your_.*_here''',
+  '''sk_live_your_key_here''',
+  '''pk_live_your_key_here''',
+]
+
+# ── Custom Rules ────────────────────────────────────────────────────────────
+# Add detection rules for any internal or proprietary token formats
+# your organisation uses that aren't covered by the default ruleset.
+
+[[rules]]
+description = "Internal API Token"
+id = "myapp-api-token"
+regex = '''myapp_[0-9a-zA-Z]{32}'''
+tags = ["api", "internal"]
+
+[[rules]]
+description = "Internal Service Account Key"
+id = "myapp-service-key"
+regex = '''svc_[0-9a-zA-Z]{40}'''
+tags = ["service-account", "internal"]
