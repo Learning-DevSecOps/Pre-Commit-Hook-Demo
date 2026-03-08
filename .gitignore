@@ -1,0 +1,53 @@
+# Environment & Secrets
+.env
+.env.*
+!.env.example
+*.local
+
+# Private Keys
+*.pem
+*.key
+*.p12
+id_rsa
+id_ed25519
+
+# Cloud Credentials
+.aws/
+.gcloud/
+kubeconfig
+serviceAccountKey.json
+
+# Secret Config Files
+secrets.yaml
+secrets.yml
+credentials.json
+config/secrets.*
+
+# Logs
+*.log
+logs/
+
+# Database
+*.sqlite
+*.sqlite3
+*.db
+
+# IDE & OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Node
+node_modules/
+npm-debug.log*
