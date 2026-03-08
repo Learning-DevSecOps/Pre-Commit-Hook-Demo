@@ -23,7 +23,7 @@ The pre-commit framework solves this by centralising all hook definitions in a Y
 ├── .env.example                 # Safe placeholder template — commit this, never .env
 ├── .pre-commit-config.yaml      # Hook definitions (Gitleaks + housekeeping checks)
 ├── .gitleaks.toml               # Custom rules and false-positive suppression
-├── test.txt                     # Demo file used in the walkthrough
+├── secret_test.py               # Demo file used in the walkthrough
 └── README.md
 ```
 
@@ -113,46 +113,32 @@ Gitleaks is pinned to `v8.30.0` — the version is locked in source control so e
 
 ### 🔴 Trigger — Commit Blocked by a Detected Secret
 
-Add a fake AWS secret to `test.txt` using the command for your platform:
+Write a fake Stripe secret key into `secret_test.py` using the command for your platform:
 
 **macOS / Linux**
 ```bash
-echo 'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY' >> test.txt
+echo 'STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1' > secret_test.py
 ```
 
 **Windows CMD**
 ```cmd
-echo AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY >> test.txt
+echo STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1 > secret_test.py
 ```
 
 **Windows PowerShell**
 ```powershell
-Add-Content test.txt 'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+Set-Content secret_test.py 'STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1'
 ```
 
-> 💡 **Easiest cross-platform option:** Open `test.txt` in any editor, paste the line below on a new line, and save. No quoting issues on any OS.
+> 💡 **Easiest cross-platform option:** Open `secret_test.py` in any editor, paste the line below, and save.
 > ```
-> AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
+> STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1
 > ```
-
-Before committing, verify the secret landed in the file correctly:
-
-```bash
-cat test.txt       # macOS / Linux
-type test.txt      # Windows CMD
-```
-
-The last line must look exactly like this — **no surrounding single quotes**:
-
-```
-AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY     ✅ Gitleaks will catch this
-'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'   ❌ Quoted — Gitleaks will miss this
-```
 
 Now stage and commit:
 
 ```bash
-git add test.txt
+git add secret_test.py
 git commit -m "test"
 ```
 
@@ -163,17 +149,21 @@ Detect hardcoded secrets................................................Failed
 - hook id: gitleaks
 - exit code: 1
 
-    Finding:     AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY
-    RuleID:      generic-api-key
-    Entropy:     4.712
-    File:        test.txt
+    Finding:     STRIPE_SECRET_KEY=REDACTED
+    Secret:      REDACTED
+    RuleID:      stripe-access-token
+    Entropy:     4.875000
+    File:        secret_test.py
     Line:        1
+    Fingerprint: secret_test.py:stripe-access-token:1
+
+10:05PM WRN leaks found: 1
 ```
 
-The secret never reaches the repository. Restore the file:
+The secret is redacted in the output and the commit never reaches the repository. Restore the file:
 
 ```bash
-git restore test.txt
+git restore secret_test.py
 ```
 
 ---
@@ -183,7 +173,7 @@ git restore test.txt
 Stage the restored (clean) file and commit:
 
 ```bash
-git add test.txt
+git add secret_test.py
 git commit -m "clean commit"
 ```
 
@@ -202,15 +192,39 @@ detect private key......................................................Passed
 
 ---
 
+## ⚠️ Why AWS and GitHub Example Keys Don't Trigger Gitleaks
+
+You might be tempted to use the well-known AWS example key from documentation:
+
+```
+# These will NOT trigger Gitleaks — they are internally allowlisted
+AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY    ❌
+GITHUB_TOKEN=ghp_aBcDeFgHiJkLmNoPqRsTuVwXyZ123456789    ❌
+AWS_ACCESS_KEY_ID=AKIAIOSFODNN7EXAMPLE                   ❌
+```
+
+Gitleaks v8.30.0 has these exact strings on an **internal allowlist** because they appear across thousands of official documentation pages and tutorials. Scanning them would generate noise on every repo that has a README.
+
+For a reliable demo, always use a **realistic-looking key with random characters** that matches a known secret format but isn't a documented example string:
+
+```
+STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1    ✅ Blocked
+```
+
+Gitleaks catches this because it matches the `sk_live_` prefix pattern, has high entropy (4.875), and is not on any allowlist.
+
+---
+
 ## ⚠️ Common Pitfall — Secret Inside Quotes (Windows)
 
-On Windows, `echo '...' >> test.txt` writes the single quotes as part of the file content:
+On Windows, `echo '...' > secret_test.py` writes the single quotes as part of the file content:
 
 ```
-'AWS_SECRET=wJalrXUtnFEMI/K7MDENG/bPxRfiCYEXAMPLEKEY'
+'STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1'   ❌ Gitleaks misses this
+STRIPE_SECRET_KEY=sk_live_4xKqP9mN2rL7vB8wE3jH6tY1     ✅ Gitleaks catches this
 ```
 
-Gitleaks won't flag this — it doesn't match the pattern for a real credential assignment. Always run `type test.txt` to confirm the line has no surrounding quotes before staging.
+Always verify with `type secret_test.py` (Windows) or `cat secret_test.py` (macOS/Linux) before staging to confirm there are no surrounding quotes.
 
 ---
 
