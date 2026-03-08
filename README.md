@@ -68,7 +68,7 @@ pip install pre-commit   # cross-platform
 ### Step 2 — Clone this repo
 
 ```bash
-git clone https://github.com/your-username/precommit-gitleaks-demo.git
+git clone https://github.com/Learning-DevSecOps/precommit-gitleaks-demo.git
 cd precommit-gitleaks-demo
 ```
 
